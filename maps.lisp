@@ -1,3 +1,7 @@
+(defmacro forhash (params hash &body body)
+  `(maphash (lambda ,params ,@body) ,hash)
+)
+
 (defgeneric with-vals (v &rest kvs))
 
 (defmethod with-vals ((v vector) &rest kvs)
@@ -9,7 +13,7 @@
 
 (defmethod with-vals ((h hash-table) &rest kvs)
   (let ((r (make-hash-table)))
-    (maphash (lambda (k v) (setf (gethash k r) v)) h)
+    (forhash (k v) h (setf (gethash k r) v))
     (loop for (k v) on kvs by #'cddr do (setf (gethash k r) v))
     r
   )
@@ -17,9 +21,9 @@
 
 (defun hash->str (h)
   (with-output-to-string (r)
-    (format r "(")
-    (maphash (lambda (k v) (format r " (~A ~A)" k v)) h)
-    (format r " )")
+    (format r "{")
+    (forhash (k v) h (format r " ~A ~A" k v))
+    (format r " }")
   )
 )
 
@@ -32,7 +36,35 @@
 
 (defun merge-hash (&rest hs)
   (let ((r (make-hash-table)))
-    (dolist (h hs) (maphash (lambda (k v) (setf (gethash k r) v)) h))
+    (dolist (h hs) (forhash (k v) h (setf (gethash k r) v)))
     r
+  )
+)
+
+(defun hash-keys (h)
+  (let ((r nil))
+    (forhash (k v) h (declare (ignore v)) (setf r (nconc r (list k))))
+    r
+  )
+)
+
+(defun hash-vals (h)
+  (let ((r nil))
+    (forhash (k v) h (declare (ignore k)) (setf r (nconc r (list v))))
+    r
+  )
+)
+
+(defun hash->assoc (h)
+  (let ((r nil))
+    (forhash (k v) h (setf r (nconc r (list (cons k v)))))
+    r
+  )
+)
+
+(defun assoc->hash (a)
+  (loop with r = (make-hash-table) for (k . v) in a
+    do (setf (gethash k r) v)
+    finally (return r)
   )
 )
