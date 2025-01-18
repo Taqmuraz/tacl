@@ -68,3 +68,12 @@
     finally (return r)
   )
 )
+
+(defgeneric update (map func &rest keys))
+
+(defmethod update ((v vector) func &rest keys)
+  (let ((c (copy-seq v)))
+    (dolist (k keys) (setf (aref c k) (funcall func (aref v k))))
+    c
+  )
+)
