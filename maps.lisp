@@ -41,6 +41,13 @@
   )
 )
 
+(defun copy-hash (h)
+  (let ((r (make-hash-table)))
+    (forhash (k v) h (setf (gethash k r) v))
+    r
+  )
+)
+
 (defun hash-keys (h)
   (let ((r nil))
     (forhash (k v) h (declare (ignore v)) (setf r (nconc r (list k))))
@@ -75,5 +82,13 @@
   (let ((c (copy-seq v)))
     (dolist (k keys) (setf (aref c k) (funcall func (aref v k))))
     c
+  )
+)
+
+(defmethod update ((h hash-table) func &rest keys)
+  (loop for k in keys
+    with r = (copy-hash h)
+    do (setf (gethash k r) (funcall func (gethash k r)))
+    finally (return r)
   )
 )
