@@ -88,7 +88,11 @@
 (defmethod update ((h hash-table) func &rest keys)
   (loop for k in keys
     with r = (copy-hash h)
-    do (setf (gethash k r) (funcall func (gethash k r)))
+    do (multiple-value-bind (v p) (gethash k r)
+      (if p
+        (setf (gethash k r) (funcall func v))
+      )
+    )
     finally (return r)
   )
 )
